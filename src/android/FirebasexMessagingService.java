@@ -1,8 +1,10 @@
 package org.apache.cordova.firebasex;
 
+import android.app.ActivityManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -29,6 +31,7 @@ import android.graphics.Canvas;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import io.intercom.android.sdk.push.IntercomPushClient;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -130,6 +133,23 @@ public class FirebasexMessagingService extends FirebaseMessagingService {
                 return;
             }
 
+            Map<String, String> data = remoteMessage.getData();
+            IntercomPushClient intercomPushClient = new IntercomPushClient();
+            if (intercomPushClient.isIntercomPush(data)) {
+                ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+                Intent launchIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+                if (activityManager != null && activityManager.getAppTasks().isEmpty() && launchIntent != null) {
+                    TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(this);
+                    taskStackBuilder.addNextIntent(launchIntent);
+                    intercomPushClient.handlePushWithCustomStack(getApplication(), data, taskStackBuilder);
+                    Log.d(TAG, "Message was handled by Intercom with the application launch stack");
+                } else {
+                    intercomPushClient.handlePush(getApplication(), data);
+                    Log.d(TAG, "Message was handled by Intercom");
+                }
+                return;
+            }
+
             if(FirebasexCorePlugin.applicationContext == null){
                 FirebasexCorePlugin.applicationContext = this.getApplicationContext();
             }
@@ -154,8 +174,6 @@ public class FirebasexMessagingService extends FirebaseMessagingService {
             String image = null;
             String imageType = null;
             boolean foregroundNotification = false;
-
-            Map<String, String> data = remoteMessage.getData();
 
             if (remoteMessage.getNotification() != null) {
                 Log.i(TAG, "Received message: notification");
