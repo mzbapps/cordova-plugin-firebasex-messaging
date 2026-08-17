@@ -283,14 +283,16 @@ public class FirebasexMessagingService extends FirebaseMessagingService {
             Intent intent;
             PendingIntent pendingIntent;
             final int flag = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT;
+            Bundle tapBundle = new Bundle(bundle);
+            tapBundle.putString("tap", FirebasexMessagingPlugin.inBackground() ? "background" : "foreground");
 
             if(getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.S && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 intent = new Intent(this, OnNotificationReceiverActivity.class);
-                intent.putExtras(bundle);
+                intent.putExtras(tapBundle);
                 pendingIntent = PendingIntent.getActivity(this, id.hashCode(), intent, flag);
             }else{
                 intent = new Intent(this, OnNotificationOpenReceiver.class);
-                intent.putExtras(bundle);
+                intent.putExtras(tapBundle);
                 pendingIntent = PendingIntent.getBroadcast(this, id.hashCode(), intent, flag);
             }
 

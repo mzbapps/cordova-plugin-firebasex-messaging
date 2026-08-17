@@ -56,7 +56,7 @@ public class OnNotificationReceiverActivity extends Activity {
 
             Bundle data = intent.getExtras();
             if(!data.containsKey("messageType")) data.putString("messageType", "notification");
-            data.putString("tap", FirebasexMessagingPlugin.inBackground() ? "background" : "foreground");
+            if(!data.containsKey("tap")) data.putString("tap", FirebasexMessagingPlugin.inBackground() ? "background" : "foreground");
 
             Log.d(TAG, "OnNotificationReceiverActivity.handleNotification(): "+data.toString());
 
