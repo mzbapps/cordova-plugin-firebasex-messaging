@@ -11,6 +11,18 @@
 #import "AppDelegate+FirebasexMessaging.h"
 #import "FirebasePluginMessageReceiverManager.h"
 #import <Cordova/CDV.h>
+#if __has_include(<OneSignalCore/OneSignalCoreHelper.h>)
+    #import <OneSignalCore/OneSignalCoreHelper.h>
+    #define FIREBASEX_HAS_ONESIGNAL_PAYLOAD_CLASSIFIER 1
+#else
+    #define FIREBASEX_HAS_ONESIGNAL_PAYLOAD_CLASSIFIER 0
+#endif
+#if __has_include(<Intercom/Intercom.h>)
+    #import <Intercom/Intercom.h>
+    #define FIREBASEX_HAS_INTERCOM_PAYLOAD_CLASSIFIER 1
+#else
+    #define FIREBASEX_HAS_INTERCOM_PAYLOAD_CLASSIFIER 0
+#endif
 #if __has_include("FirebasexCorePlugin.h")
     // Cordova-ios 7 / CocoaPods: Files are compiled in a flat target structure
     #import "AppDelegate+FirebasexCore.h"
@@ -20,6 +32,25 @@
 #endif
 @import FirebaseMessaging;
 @import UserNotifications;
+
+/**
+ * Returns the provider that owns a notification payload, when an installed
+ * provider SDK claims it. Conditional imports keep these coexistence checks
+ * optional when either provider is removed from the host app.
+ */
+static NSString *FirebasexExternalProviderForNotification(NSDictionary *userInfo) {
+    if (userInfo == nil) return nil;
+
+#if FIREBASEX_HAS_ONESIGNAL_PAYLOAD_CLASSIFIER
+    if ([OneSignalCoreHelper isOneSignalPayload:userInfo]) return @"OneSignal";
+#endif
+
+#if FIREBASEX_HAS_INTERCOM_PAYLOAD_CLASSIFIER
+    if ([Intercom isIntercomPushNotification:userInfo]) return @"Intercom";
+#endif
+
+    return nil;
+}
 
 @implementation FirebasexMessagingPlugin
 
@@ -677,6 +708,12 @@ static BOOL immediateMessagePayloadDelivery = NO;
  */
 - (void)sendNotification:(NSDictionary *)userInfo {
     @try {
+        NSString *externalProvider = FirebasexExternalProviderForNotification(userInfo);
+        if (externalProvider != nil) {
+            [[FirebasexCorePlugin sharedInstance] _logMessage:[NSString stringWithFormat:@"Message owned by %@; skipping FirebaseX callback", externalProvider]];
+            return;
+        }
+
         if ([FirebasePluginMessageReceiverManager sendNotification:userInfo]) {
             [[FirebasexCorePlugin sharedInstance] _logMessage:@"Message handled by custom receiver"];
             return;
