@@ -159,6 +159,17 @@ exports.grantPermission = function (success, error, requestWithProvidesAppNotifi
 };
 
 /**
+ * Opens this app's notification settings (Android only).
+ * Android 8+ opens the notification settings page; Android 7.x falls back to
+ * the app details settings page. On iOS this action is not supported.
+ * @param {Function} success - Called after the settings activity opens.
+ * @param {Function} error - Called on failure.
+ */
+exports.openNotificationSettings = function (success, error) {
+    exec(success, error, SERVICE, 'openNotificationSettings', []);
+};
+
+/**
  * Checks whether the app has critical alert permission (iOS 12+ only).
  * On Android this always returns `false`.
  * @param {Function} success - Called with `true` if critical alert permission is granted.

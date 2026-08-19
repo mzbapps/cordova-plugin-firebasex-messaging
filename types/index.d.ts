@@ -35,6 +35,7 @@ interface FirebasexMessagingPlugin {
     // Permissions
     hasPermission(success: (hasPermission: boolean) => void, error: (err: string) => void): void;
     grantPermission(success: (granted: boolean) => void, error: (err: string) => void, requestWithProvidesAppNotificationSettings?: boolean): void;
+    openNotificationSettings(success: () => void, error: (err: string) => void): void;
     hasCriticalPermission(success: (hasPermission: boolean) => void, error: (err: string) => void): void;
     grantCriticalPermission(success: (granted: boolean) => void, error: (err: string) => void): void;
 

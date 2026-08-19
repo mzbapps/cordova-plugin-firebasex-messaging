@@ -13,6 +13,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -184,6 +185,9 @@ public class FirebasexMessagingPlugin extends CordovaPlugin {
                     return true;
                 case "grantPermission":
                     grantPermission(callbackContext);
+                    return true;
+                case "openNotificationSettings":
+                    openNotificationSettings(callbackContext);
                     return true;
                 case "isAutoInitEnabled":
                     isAutoInitEnabled(callbackContext);
@@ -454,6 +458,34 @@ public class FirebasexMessagingPlugin extends CordovaPlugin {
                     } else {
                         callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, true));
                     }
+                } catch (Exception e) {
+                    FirebasexCorePlugin.getInstance().handleExceptionWithContext(e, callbackContext);
+                }
+            }
+        });
+    }
+
+    /**
+     * Opens the app-specific notification settings on Android 8+ and the
+     * application-details settings page on Android 7.x.
+     * @param callbackContext Called after the settings activity is opened.
+     */
+    private void openNotificationSettings(final CallbackContext callbackContext) {
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                try {
+                    Activity activity = cordova.getActivity();
+                    String packageName = activity.getPackageName();
+                    Intent intent;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+                        intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName);
+                    } else {
+                        intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.parse("package:" + packageName));
+                    }
+                    activity.startActivity(intent);
+                    callbackContext.success();
                 } catch (Exception e) {
                     FirebasexCorePlugin.getInstance().handleExceptionWithContext(e, callbackContext);
                 }

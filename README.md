@@ -43,6 +43,7 @@ Supported platforms: Android and iOS
     - [onOpenSettings](#onopensettings)
     - [onMessageReceived](#onmessagereceived)
     - [grantPermission](#grantpermission)
+    - [openNotificationSettings](#opennotificationsettings)
     - [grantCriticalPermission](#grantcriticalpermission)
     - [hasPermission](#haspermission)
     - [hasCriticalPermission](#hascriticalpermission)
@@ -1165,6 +1166,21 @@ FirebasexMessaging.grantPermission(function (hasPermission) {
     console.log(
         "Notifications permission was " + (hasPermission ? "granted" : "denied")
     );
+});
+```
+
+### openNotificationSettings
+
+Open the app-specific Android notification settings. Android 8 and later open
+the notification settings page; Android 7.x opens the application-details
+settings page. This method is Android-only and does not silently request or
+change permission.
+
+```javascript
+FirebasexMessaging.openNotificationSettings(function () {
+    console.log("Notification settings opened");
+}, function (error) {
+    console.error(error);
 });
 ```
 
