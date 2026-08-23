@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -53,6 +54,22 @@ import java.util.Random;
 public class FirebasexMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "FirebasePlugin";
+
+    private boolean hasApplicationLaunchTask(ActivityManager activityManager, Intent launchIntent) {
+        if (activityManager == null || launchIntent == null || launchIntent.getComponent() == null) {
+            return false;
+        }
+
+        ComponentName launchComponent = launchIntent.getComponent();
+        for (ActivityManager.AppTask appTask : activityManager.getAppTasks()) {
+            ActivityManager.RecentTaskInfo taskInfo = appTask.getTaskInfo();
+            if (taskInfo != null &&
+                    (launchComponent.equals(taskInfo.baseActivity) || launchComponent.equals(taskInfo.topActivity))) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /** Default drawable resource name for the small notification icon. */
     static final String defaultSmallIconName = "notification_icon";
@@ -138,7 +155,7 @@ public class FirebasexMessagingService extends FirebaseMessagingService {
             if (intercomPushClient.isIntercomPush(data)) {
                 ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
                 Intent launchIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
-                if (activityManager != null && activityManager.getAppTasks().isEmpty() && launchIntent != null) {
+                if (!hasApplicationLaunchTask(activityManager, launchIntent) && launchIntent != null) {
                     TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(this);
                     taskStackBuilder.addNextIntent(launchIntent);
                     intercomPushClient.handlePushWithCustomStack(getApplication(), data, taskStackBuilder);
