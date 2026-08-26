@@ -19,6 +19,12 @@
     // Cordova-ios 8+ / SPM: Plugins are isolated Swift Package modules
     @import cordova_plugin_firebasex_core;
 #endif
+#if __has_include(<Intercom/Intercom.h>)
+    #import <Intercom/Intercom.h>
+    #define FIREBASEX_HAS_INTERCOM_DEVICE_TOKEN_REGISTRATION 1
+#else
+    #define FIREBASEX_HAS_INTERCOM_DEVICE_TOKEN_REGISTRATION 0
+#endif
 @import UserNotifications;
 @import FirebaseMessaging;
 
@@ -106,8 +112,18 @@ static NSDictionary *mutableUserInfo;
     if (![self firebasexMessagingIsFCMEnabled]) return;
 
     [FIRMessaging messaging].APNSToken = deviceToken;
-    [[FirebasexCorePlugin sharedInstance] _logMessage:[NSString stringWithFormat:@"didRegisterForRemoteNotificationsWithDeviceToken: %@", deviceToken]];
+    [[FirebasexCorePlugin sharedInstance] _logMessage:@"didRegisterForRemoteNotificationsWithDeviceToken"];
     [[FirebasexMessagingPlugin instance] sendApnsToken:[[FirebasexMessagingPlugin instance] getAPNSToken]];
+
+#if FIREBASEX_HAS_INTERCOM_DEVICE_TOKEN_REGISTRATION
+    [Intercom setDeviceToken:deviceToken
+                     success:^{
+                         [[FirebasexCorePlugin sharedInstance] _logMessage:@"Registered APNs device token with Intercom"];
+                     }
+                     failure:^(NSError *error) {
+                         [[FirebasexCorePlugin sharedInstance] _logError:[NSString stringWithFormat:@"Failed to register APNs device token with Intercom: domain=%@ code=%ld", error.domain, (long)error.code]];
+                     }];
+#endif
 }
 
 /** Logs APNs registration failure. */
