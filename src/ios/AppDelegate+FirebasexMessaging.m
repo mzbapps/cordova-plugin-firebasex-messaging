@@ -385,8 +385,19 @@ static NSDictionary *mutableUserInfo;
             }
         }
 
-        [[FIRMessaging messaging] appDidReceiveMessage:response.notification.request.content.userInfo];
-        NSMutableDictionary *mutableInfo = [response.notification.request.content.userInfo mutableCopy];
+        NSDictionary *userInfo = response.notification.request.content.userInfo;
+
+#if FIREBASEX_HAS_INTERCOM_DEVICE_TOKEN_REGISTRATION
+        if ([Intercom isIntercomPushNotification:userInfo]) {
+            [[FirebasexCorePlugin sharedInstance] _logMessage:@"Handling Intercom notification response"];
+            [Intercom handleIntercomPushNotification:userInfo];
+            completionHandler();
+            return;
+        }
+#endif
+
+        [[FIRMessaging messaging] appDidReceiveMessage:userInfo];
+        NSMutableDictionary *mutableInfo = [userInfo mutableCopy];
 
         NSString *tap;
         if ([self.applicationInBackground isEqual:[NSNumber numberWithBool:YES]]) {
