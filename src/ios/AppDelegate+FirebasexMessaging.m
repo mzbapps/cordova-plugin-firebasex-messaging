@@ -396,6 +396,10 @@ static NSDictionary *mutableUserInfo;
         }
 #endif
 
+        [[NSNotificationCenter defaultCenter]
+            postNotificationName:FirebasexNotificationTapped
+                          object:response];
+
         [[FIRMessaging messaging] appDidReceiveMessage:userInfo];
         NSMutableDictionary *mutableInfo = [userInfo mutableCopy];
 
